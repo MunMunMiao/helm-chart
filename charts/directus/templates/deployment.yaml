@@ -1,0 +1,182 @@
+{{ $storageLocal := .Values.storage.local }}
+{{ $storageS3 := .Values.storage.s3 }}
+{{ $authGithub := .Values.auth.github }}
+{{ $authLdap := .Values.auth.ldap }}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "directus.fullname" . }}
+  labels:
+    {{- include "directus.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "directus.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "directus.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /server/health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /server/health
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: KEY
+              value: {{ uuidv4 }}
+            - name: SECRET
+              value: {{ uuidv4 }}
+            - name: HOST
+              value: "0.0.0.0"
+            - name: PORT
+              value: "80"
+            - name: LOG_LEVEL
+              value: {{ .Values.base.logLevel }}
+            - name: MAX_RELATIONAL_DEPTH
+              value: {{ quote .Values.base.maxRelationalDepth }}
+            - name: PUBLIC_URL
+              value: {{ .Values.base.publicHost }}
+            - name: CACHE_ENABLED
+              value: "true"
+            - name: CACHE_AUTO_PURGE
+              value: "true"
+            - name: CACHE_SCHEMA
+              value: "true"
+            - name: CACHE_PERMISSIONS
+              value: "true"
+            - name: CACHE_VALUE_MAX_SIZE
+              value: "false"
+            - name: CACHE_STORE
+              value: {{ .Values.cache.type }}
+            - name: CACHE_REDIS
+              value: {{ .Values.cache.redis.url }}
+            - name: CACHE_REDIS_HOST
+              value: {{ quote .Values.cache.redis.host }}
+            - name: CACHE_REDIS_PORT
+              value: {{ quote .Values.cache.redis.port }}
+            - name: CACHE_REDIS_PASSWORD
+              value: {{ .Values.cache.redis.password }}
+            - name: CACHE_TTL
+              value: "30m"
+            - name: STORAGE_LOCATIONS
+              value: {{ join "," .Values.storage.locations }}
+            {{- range .Values.storage.locations }}
+            {{- if eq . "local"  }}
+            - name: STORAGE_LOCAL_DRIVER
+              value: "local"
+            - name: STORAGE_LOCAL_ROOT
+              value: {{ $storageLocal.root }}
+            {{- end  }}
+            {{- if eq . "s3"  }}
+            - name: STORAGE_S3_DRIVER
+              value: "s3"
+            - name: STORAGE_S3_KEY
+              value: {{ $storageS3.accessKey }}
+            - name: STORAGE_S3_SECRET
+              value: {{ $storageS3.accessKeySecret }}
+            - name: STORAGE_S3_BUCKET
+              value: {{ $storageS3.bucket }}
+            - name: STORAGE_S3_REGION
+              value: {{ $storageS3.region }}
+            - name: STORAGE_S3_ENDPOINT
+              value: {{ $storageS3.endpoint }}
+            - name: STORAGE_S3_S3_FORCE_PATH_STYLE
+              value: {{ quote $storageS3.forcePathStyle }}
+            {{- end  }}
+            {{- end  }}
+            {{- if eq .Values.database.type "mysql" }}
+            - name: DB_CLIENT
+              value: "mysql"
+            - name: DB_HOST
+              value: {{ .Values.database.mysql.host }}
+            - name: DB_PORT
+              value: {{ quote .Values.database.mysql.port }}
+            - name: DB_DATABASE
+              value: {{ .Values.database.mysql.database }}
+            - name: DB_USER
+              value: {{ .Values.database.mysql.user }}
+            - name: DB_PASSWORD
+              value: {{ quote .Values.database.mysql.password }}
+            {{- end }}
+            - name: AUTH_PROVIDERS
+              value: {{ join "," .Values.auth.providers }}
+            {{- range .Values.auth.providers }}
+            {{- if eq . "github" }}
+            - name: AUTH_GITHUB_DRIVER
+              value: "oauth2"
+            - name: AUTH_GITHUB_AUTHORIZE_URL
+              value: "https://github.com/login/oauth/authorize"
+            - name: AUTH_GITHUB_ACCESS_URL
+              value: "https://github.com/login/oauth/access_token"
+            - name: AUTH_GITHUB_PROFILE_URL
+              value: "https://api.github.com/user"
+            - name: AUTH_GITHUB_CLIENT_ID
+              value: {{ $authGithub.clientId }}
+            - name: AUTH_GITHUB_CLIENT_SECRET
+              value: {{ $authGithub.clientSecret }}
+            {{- end }}
+            {{- if eq . "ldap" }}
+            - name: AUTH_LDAP_DRIVER
+              value: "ldap"
+            - name: AUTH_LDAP_CLIENT_URL
+              value: {{ $authLdap.url }}
+            - name: AUTH_LDAP_BIND_DN
+              value: {{ $authLdap.bindDN }}
+            - name: AUTH_LDAP_BIND_PASSWORD
+              value: {{ $authLdap.bindPassword }}
+            - name: AUTH_LDAP_USER_DN
+              value: {{ $authLdap.userDN }}
+            - name: AUTH_LDAP_USER_ATTRIBUTE
+              value: {{ $authLdap.userAttribute }}
+            - name: AUTH_LDAP_MAIL_ATTRIBUTE
+              value: {{ $authLdap.mailAttribute }}
+            - name: AUTH_LDAP_FIRST_NAME_ATTRIBUTE
+              value: {{ $authLdap.firstAttribute }}
+            - name: AUTH_LDAP_LAST_NAME_ATTRIBUTE
+              value: {{ $authLdap.lastAttribute }}
+            - name: AUTH_LDAP_DEFAULT_ROLE_ID
+              value: {{ $authLdap.defaultRoleID }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.mail.enable }}
+            - name: EMAIL_VERIFY_SETUP
+              value: {{ quote .Values.mail.verifySetup }}
+            - name: EMAIL_FROM
+              value: {{ .Values.mail.from }}
+            - name: EMAIL_TRANSPORT
+              value: "smtp"
+            - name: EMAIL_SMTP_HOST
+              value: {{ .Values.mail.smtp.host }}
+            - name: EMAIL_SMTP_PORT
+              value: {{ quote .Values.mail.smtp.port }}
+            - name: EMAIL_SMTP_USER
+              value: {{ .Values.mail.smtp.user }}
+            - name: EMAIL_SMTP_PASSWORD
+              value: {{ .Values.mail.smtp.password }}
+            - name: EMAIL_SMTP_SECURE
+              value: {{ quote .Values.mail.smtp.secure }}
+            {{- end}}
