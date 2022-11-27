@@ -70,3 +70,5 @@ spec:
               value: {{ .Values.common.trackerUrl | quote }}
             - name: TZ
               value: {{ .Values.common.tz | quote }}
+            - name: UPDATE_TRACKERS
+              value: {{ .Values.common.tz | quote }}

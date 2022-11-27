@@ -6,7 +6,9 @@ common:
   listenPort: "6888"
   diskCache: "64M"
   ipv6: "false"
+  UPDATE_TRACKERS: "false"
   trackerUrl: "https://trackerslist.com/all_aria2.txt"
+  autoUpdateTracker: "true"
   tz: "Asia/Shanghai"
 
 server:
