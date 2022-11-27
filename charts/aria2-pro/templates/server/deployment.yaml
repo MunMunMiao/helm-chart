@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "aria2-pro.server.fullname" . }}
+  labels:
+    {{- include "aria2-pro.server.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "aria2-pro.server.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.server.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "aria2-pro.server.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.server.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: config
+          {{- if .Values.server.volume.config.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.server.volume.config.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "aria2-pro.server.volume.config.name" . }}
+          {{- end }}
+        - name: downloads
+          {{- if .Values.server.volume.downloads.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.server.volume.downloads.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "aria2-pro.server.volume.downloads.name" . }}
+          {{- end }}
+      hostNetwork: true
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.server.securityContext | nindent 12 }}
+          image: "p3terx/aria2-pro:latest"
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.server.port.rpc }}
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: downloads
+              mountPath: /downloads
+          env:
+            - name: RPC_SECRET
+              value: {{ .Values.common.secret | quote }}
+            - name: RPC_PORT
+              value: {{ .Values.server.port.rpc | quote }}
+            - name: LISTEN_PORT
+              value: {{ .Values.common.listenPort | quote }}
+            - name: DISK_CACHE
+              value: {{ .Values.common.diskCache | quote }}
+            - name: IPV6_MODE
+              value: {{ .Values.common.ipv6 | quote }}
+            - name: CUSTOM_TRACKER_URL
+              value: {{ .Values.common.trackerUrl | quote }}
+            - name: TZ
+              value: {{ .Values.common.tz | quote }}

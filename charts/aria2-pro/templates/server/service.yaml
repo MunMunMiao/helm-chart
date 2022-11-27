@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "aria2-pro.server.fullname" . }}
+  labels:
+    {{- include "aria2-pro.server.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.web.service.type }}
+  ports:
+    - port: {{ .Values.server.port.rpc }}
+      protocol: TCP
+      name: rpc
+  selector:
+    {{- include "aria2-pro.web.selectorLabels" . | nindent 4 }}

@@ -1,0 +1,47 @@
+{{- if .Values.web.ingress.enabled -}}
+{{- $serverFullName := include "aria2-pro.server.fullname" . -}}
+{{- $webFullName := include "aria2-pro.web.fullname" . -}}
+{{- $svrPort := .Values.server.port.rpc }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $serverFullName }}
+  labels:
+    {{- include "aria2-pro.web.labels" . | nindent 4 }}
+  {{- with .Values.web.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.web.ingress.className }}
+  {{- if .Values.web.ingress.tls }}
+  tls:
+    {{- range .Values.web.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.web.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ $webFullName }}
+                port:
+                  number: 80
+          - path: /jsonrpc
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ $serverFullName }}
+                port:
+                  number: {{ $svrPort }}
+    {{- end }}
+{{- end }}
