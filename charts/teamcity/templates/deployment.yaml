@@ -1,13 +1,13 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "teamcity.fullname" . }}
   labels:
     {{- include "teamcity.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  updateStrategy:
+    type: RollingUpdate
   selector:
     matchLabels:
       {{- include "teamcity.selectorLabels" . | nindent 6 }}

@@ -1,11 +1,16 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "aria2-pro.server.fullname" . }}
   labels:
     {{- include "aria2-pro.server.labels" . | nindent 4 }}
 spec:
   replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
   selector:
     matchLabels:
       {{- include "aria2-pro.server.selectorLabels" . | nindent 6 }}
