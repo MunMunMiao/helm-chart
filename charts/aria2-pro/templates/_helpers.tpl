@@ -11,14 +11,6 @@
 {{- printf "%s-server" .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "aria2-pro.server.volume.downloads.name" -}}
-{{- printf "%s-server-downloads" .Release.Name | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{- define "aria2-pro.server.volume.config.name" -}}
-{{- printf "%s-server-config" .Release.Name | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
 {{- define "aria2-pro.server.labels" -}}
 helm.sh/chart: {{ include "aria2-pro.server.chart" . }}
 {{ include "aria2-pro.server.selectorLabels" . }}

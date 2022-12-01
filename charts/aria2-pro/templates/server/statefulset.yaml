@@ -30,23 +30,6 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml .Values.server.podSecurityContext | nindent 8 }}
-      volumes:
-        - name: config
-          {{- if .Values.server.volume.config.existingClaim }}
-          persistentVolumeClaim:
-            claimName: {{ .Values.server.volume.config.existingClaim }}
-          {{- else }}
-          persistentVolumeClaim:
-            claimName: {{ include "aria2-pro.server.volume.config.name" . }}
-          {{- end }}
-        - name: downloads
-          {{- if .Values.server.volume.downloads.existingClaim }}
-          persistentVolumeClaim:
-            claimName: {{ .Values.server.volume.downloads.existingClaim }}
-          {{- else }}
-          persistentVolumeClaim:
-            claimName: {{ include "aria2-pro.server.volume.downloads.name" . }}
-          {{- end }}
       hostNetwork: true
       containers:
         - name: {{ .Chart.Name }}
@@ -78,6 +61,17 @@ spec:
               value: {{ .Values.common.tz | quote }}
             - name: UPDATE_TRACKERS
               value: {{ .Values.common.updateTrackers | quote }}
+      volumes:
+        - name: config
+          {{- if .Values.server.volume.config.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.server.volume.config.existingClaim }}
+          {{- end }}
+        - name: downloads
+          {{- if .Values.server.volume.downloads.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.server.volume.downloads.existingClaim }}
+          {{- end }}
   volumeClaimTemplates:
     {{- if not .Values.server.volume.downloads.existingClaim }}
     - metadata:
