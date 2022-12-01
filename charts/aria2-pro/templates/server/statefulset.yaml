@@ -62,16 +62,17 @@ spec:
             - name: UPDATE_TRACKERS
               value: {{ .Values.common.updateTrackers | quote }}
       volumes:
+        {{- if .Values.server.volume.config.existingClaim }}
         - name: config
           {{- if .Values.server.volume.config.existingClaim }}
           persistentVolumeClaim:
             claimName: {{ .Values.server.volume.config.existingClaim }}
-          {{- end }}
+        {{- end }}
+        {{- if .Values.server.volume.downloads.existingClaim }}
         - name: downloads
-          {{- if .Values.server.volume.downloads.existingClaim }}
           persistentVolumeClaim:
             claimName: {{ .Values.server.volume.downloads.existingClaim }}
-          {{- end }}
+        {{- end }}
   volumeClaimTemplates:
     {{- if not .Values.server.volume.downloads.existingClaim }}
     - metadata:
