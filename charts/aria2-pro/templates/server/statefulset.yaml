@@ -79,6 +79,7 @@ spec:
             - name: UPDATE_TRACKERS
               value: {{ .Values.common.updateTrackers | quote }}
   volumeClaimTemplates:
+    {{- if not .Values.server.volume.downloads.existingClaim }}
     - metadata:
         name: config
       spec:
@@ -88,6 +89,8 @@ spec:
           requests:
             storage: {{ .Values.server.volume.config.storage }}
         storageClassName: {{ .Values.server.volume.config.storageClassName }}
+    {{- end }}
+    {{- if not .Values.server.volume.downloads.existingClaim }}
     - metadata:
         name: downloads
       spec:
@@ -97,3 +100,4 @@ spec:
           requests:
             storage: {{ .Values.server.volume.downloads.storage }}
         storageClassName: {{ .Values.server.volume.downloads.storageClassName }}
+      {{- end }}
