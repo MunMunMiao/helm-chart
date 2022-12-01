@@ -78,3 +78,22 @@ spec:
               value: {{ .Values.common.tz | quote }}
             - name: UPDATE_TRACKERS
               value: {{ .Values.common.updateTrackers | quote }}
+  volumeClaimTemplates:
+    - metadata:
+        name: config
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.server.volume.config.storage }}
+        storageClassName: {{ .Values.server.volume.config.storageClassName }}
+    - metadata:
+        name: downloads
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.server.volume.downloads.storage }}
+        storageClassName: {{ .Values.server.volume.downloads.storageClassName }}
