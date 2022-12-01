@@ -73,7 +73,7 @@ spec:
             claimName: {{ .Values.server.volume.downloads.existingClaim }}
         {{- end }}
   volumeClaimTemplates:
-    {{- if not .Values.server.volume.downloads.existingClaim }}
+    {{- if not .Values.server.volume.config.existingClaim }}
     - metadata:
         name: config
       spec:
