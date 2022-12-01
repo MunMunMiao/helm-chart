@@ -61,7 +61,7 @@ spec:
               value: {{ .Values.common.tz | quote }}
             - name: UPDATE_TRACKERS
               value: {{ .Values.common.updateTrackers | quote }}
-      volumes: {}
+      volumes:
         {{- if .Values.server.volume.config.existingClaim }}
         - name: config
           persistentVolumeClaim:
